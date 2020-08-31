@@ -1,22 +1,60 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const graphqlHttp = require('express-graphql');
-const { buildSchema } = require('graphql');
+const express = require("express");
+const bodyParser = require("body-parser");
+const graphqlHttp = require("express-graphql");
+const { buildSchema } = require("graphql");
+const mongoose = require("mongoose");
+
+const Product = require("./models/product");
+const User = require("./models/user");
 
 const app = express();
 
 app.use(bodyParser.json());
+const port = process.env.PORT || 5000;
 
 app.use(
-  '/graphql',
+  "/graphql",
   graphqlHttp({
     schema: buildSchema(`
+        type Product {
+          _id: ID!
+          title: String!
+          description: String!
+          category: String!
+          value: Float!
+          img: String!
+          date: String!
+        }
+
+        type User {
+          _id: ID!
+          username: String!
+          password: String
+        }
+
+        input ProductInput {
+          title: String!
+          description: String!
+          category: String!
+          value: Float!
+          img: String!
+          date: String!
+        }
+
+        input UserInput {
+          username: String!
+          password: String!
+        }
+
         type RootQuery {
-            events: [String!]!
+            products: [Product!]!
+            users: [User!]!
         }
 
         type RootMutation {
-            createEvent(name: String): String
+          
+          createUser(userInput: UserInput): User
+            createProduct(productInput: ProductInput): Product
         }
 
         schema {
@@ -25,16 +63,90 @@ app.use(
         }
     `),
     rootValue: {
-      events: () => {
-        return ['Romantic Cooking', 'Sailing', 'All-Night Coding'];
+      //////////////////////////////////////////////
+      products: () => {
+        return Product.find()
+          .then((product) => {
+            return product.map((product) => {
+              return { ...product._doc, _id: product.id };
+            });
+          })
+          .catch((err) => {
+            console.log(err);
+            throw err;
+          });
       },
-      createEvent: (args) => {
-        const eventName = args.name;
-        return eventName;
-      }
+      createProduct: (args) => {
+        const product = new Product({
+          title: args.productInput.title,
+          description: args.productInput.description,
+          category: args.productInput.category,
+          value: args.productInput.value,
+          img: args.productInput.img,
+          date: new Date(args.productInput.date),
+        });
+        return product
+          .save()
+          .then((result) => {
+            console.log(result);
+            return { ...result._doc, _id: result.id };
+          })
+          .catch((err) => {
+            console.log(err);
+            throw err;
+          });
+      },
+      //////////////////////////////////////////////
+      users: () => {
+        return User.find()
+          .then((user) => {
+            return user.map((user) => {
+              return { ...user._doc, _id: user.id };
+            });
+          })
+          .catch((err) => {
+            console.log(err);
+            throw err;
+          });
+      },
+
+      createUser: (args) => {
+        User.findOne({ username: args.userInput.username }).then((user) => {
+          if (user) {
+            return new Error("user exists.");
+          }
+        });
+        const user = new User({
+          username: args.userInput.username,
+          password: args.userInput.password,
+        });
+        return user
+          .save()
+          .then((result) => {
+            console.log(result);
+            console.log("addeeddddd");
+            return { ...result._doc, _id: result.id };
+          })
+          .catch((err) => {
+            console.log(err);
+            console.log("cU");
+            throw err;
+          });
+      },
+      //////////////////////////////////////////////
     },
-    graphiql: true
+    graphiql: true,
   })
 );
 
-app.listen(3000);
+mongoose.connect(
+  "mongodb+srv://patkub:zse45tgb@cluster0.8awhw.gcp.mongodb.net/coffe-home-backend-test?retryWrites=true&w=majority",
+  { useNewUrlParser: true, useCreateIndex: true }
+);
+const connection = mongoose.connection;
+connection.once("open", () => {
+  console.log("MongoDB database connection established successfully");
+});
+app.listen(port, () => {
+  console.log(`Server is running on port: ${port}`);
+});
