@@ -81,7 +81,7 @@ app.use(
           title: args.productInput.title,
           description: args.productInput.description,
           category: args.productInput.category,
-          value: args.productInput.value,
+          value: +args.productInput.value,
           img: args.productInput.img,
           date: new Date(args.productInput.date),
         });
@@ -111,17 +111,19 @@ app.use(
       },
 
       createUser: (args) => {
-        User.findOne({ username: args.userInput.username }).then((user) => {
-          if (user) {
-            return new Error("user exists.");
-          }
-        });
         const user = new User({
           username: args.userInput.username,
           password: args.userInput.password,
         });
-        return user
-          .save()
+        return User.findOne({ username: args.userInput.username })
+          .then((oneuser) => {
+            if (oneuser) {
+              throw new Error("this username exists alredy.");
+            }
+
+            return user.save();
+          })
+
           .then((result) => {
             console.log(result);
             console.log("addeeddddd");
