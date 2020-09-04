@@ -5,42 +5,37 @@ type Product {
   _id: ID!
   title: String!
   description: String!
+  price: Float!
   category: String!
-  value: Float!
-  img: String!
-  date: String!
+  creator: User!
 }
 
 type User {
   _id: ID!
-  username: String!
+  email: String!
   password: String
+  createdProducts: [Product!]
 }
 
 input ProductInput {
   title: String!
   description: String!
+  price: Float!
   category: String!
-  value: Float!
-  img: String!
-  date: String!
 }
 
-
 input UserInput {
-  username: String!
+  email: String!
   password: String!
 }
 
 type RootQuery {
     products: [Product!]!
-    users: [User!]!
 }
 
 type RootMutation {
-  
-  createUser(userInput: UserInput): User
     createProduct(productInput: ProductInput): Product
+    createUser(userInput: UserInput): User
 }
 
 schema {
