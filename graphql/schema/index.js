@@ -1,6 +1,15 @@
 const { buildSchema } = require("graphql");
 
 module.exports = buildSchema(`
+
+type Cart {
+  _id: ID!
+  user: User!
+  product: Product!
+  createdAt: String!
+  updatedAt: String!
+}
+
 type Product {
   _id: ID!
   title: String!
@@ -31,11 +40,14 @@ input UserInput {
 
 type RootQuery {
     products: [Product!]!
+    cart: [Cart!]!
 }
 
 type RootMutation {
     createProduct(productInput: ProductInput): Product
     createUser(userInput: UserInput): User
+    AddToCart(productId: ID!): Cart!
+    RemoveFromCart(cartId: ID!): Cart!
 }
 
 schema {

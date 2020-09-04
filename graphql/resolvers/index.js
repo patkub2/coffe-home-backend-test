@@ -2,6 +2,7 @@ const bcrypt = require("bcryptjs");
 
 const Product = require("../../models/product");
 const User = require("../../models/user");
+const Cart = require("../../models/cart");
 
 const products = async (productIds) => {
   try {
@@ -10,7 +11,7 @@ const products = async (productIds) => {
       return {
         ...product._doc,
         _id: product.id,
-        creator: user.bind(this, product.creator),
+        creator: singleUser.bind(this, product.creator),
       };
     });
     return products;
@@ -19,7 +20,20 @@ const products = async (productIds) => {
   }
 };
 
-const user = async (userId) => {
+const singleProduct = async (productId) => {
+  try {
+    const product = await Product.findById(productId);
+    return {
+      ...product._doc,
+      _id: product.id,
+      creator: singleUser.bind(this, product._doc.creator),
+    };
+  } catch (err) {
+    throw err;
+  }
+};
+
+const singleUser = async (userId) => {
   try {
     const user = await User.findById(userId);
     return {
@@ -40,7 +54,24 @@ module.exports = {
         return {
           ...product._doc,
           _id: product.id,
-          creator: user.bind(this, product._doc.creator),
+          creator: singleUser.bind(this, product._doc.creator),
+        };
+      });
+    } catch (err) {
+      throw err;
+    }
+  },
+  cart: async () => {
+    try {
+      const cart = await Cart.find();
+      return cart.map((cart) => {
+        return {
+          ...cart._doc,
+          _id: cart.id,
+          user: singleUser.bind(this, cart._doc.user),
+          product: singleProduct.bind(this, cart._doc.product),
+          createdAt: new Date(cart._doc.createdAt).toISOString(),
+          updatedAt: new Date(cart._doc.updatedAt).toISOString(),
         };
       });
     } catch (err) {
@@ -62,7 +93,7 @@ module.exports = {
         ...result._doc,
         _id: result._doc._id.toString(),
         category: product._doc.category,
-        creator: user.bind(this, result._doc.creator),
+        creator: singleUser.bind(this, result._doc.creator),
       };
       const creator = await User.findById("5f52816ff7d12e0348d34e32");
 
@@ -94,6 +125,20 @@ module.exports = {
       const result = await user.save();
 
       return { ...result._doc, password: null, _id: result.id };
+    } catch (err) {
+      throw err;
+    }
+  },
+  AddToCart: async (args) => {
+    try {
+      const existingProduct = await Product.findOne({ _id: args.productId });
+      const cart = new Cart({
+        product: existingProduct,
+        user: "5f52816ff7d12e0348d34e32",
+      });
+      const result = await cart.save();
+
+      return { ...result._doc, _id: result.id };
     } catch (err) {
       throw err;
     }
