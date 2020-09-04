@@ -30,6 +30,7 @@ app.use(
           _id: ID!
           username: String!
           password: String
+          cart: [Product!]
         }
 
         input ProductInput {
@@ -114,6 +115,7 @@ app.use(
         const user = new User({
           username: args.userInput.username,
           password: args.userInput.password,
+          cart: "5f4d5648b122f833f8ee1a31",
         });
         return User.findOne({ username: args.userInput.username })
           .then((oneuser) => {
@@ -131,7 +133,6 @@ app.use(
           })
           .catch((err) => {
             console.log(err);
-            console.log("cU");
             throw err;
           });
       },
